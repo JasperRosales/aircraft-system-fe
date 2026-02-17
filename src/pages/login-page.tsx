@@ -1,32 +1,43 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plane, Lock, User } from "lucide-react";
-
-type UserRole = "user" | "mechanic" | null;
+import { Plane, Lock, User, ArrowRight } from "lucide-react";
+import { authService } from "@/service/auth.service";
 
 interface LoginPageProps {
   onLogin: (role: "user" | "mechanic") => void;
+  onRegisterClick: () => void;
 }
 
-export default function LoginPage({ onLogin }: LoginPageProps) {
-  const [username, setUsername] = useState("");
+export default function LoginPage({ onLogin, onRegisterClick }: LoginPageProps) {
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !password) {
-      setError("Please enter both username and password");
+    if (!name || !password) {
+      setError("Please enter both name and password");
       return;
     }
 
-    // Simple mock authentication - in real app this would validate against backend
-    // For demo: username "user" goes to user dashboard, "mechanic" goes to mechanic dashboard
-    if (username.toLowerCase() === "mechanic") {
-      onLogin("mechanic");
-    } else {
-      onLogin("user");
+    setLoading(true);
+    setError("");
+
+    try {
+      const user = await authService.login(name, password);
+      
+      // Map backend role to frontend role
+      if (user.role === "mechanic" || name.toLowerCase() === "mechanic") {
+        onLogin("mechanic");
+      } else {
+        onLogin("user");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -43,18 +54,19 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="username" className="text-sm font-medium text-slate-700">
-              Username
+            <label htmlFor="name" className="text-sm font-medium text-slate-700">
+              Name
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
-                id="username"
+                id="name"
                 type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your name"
                 className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                disabled={loading}
               />
             </div>
           </div>
@@ -72,6 +84,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                disabled={loading}
               />
             </div>
           </div>
@@ -80,13 +93,20 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <p className="text-sm text-red-500">{error}</p>
           )}
 
-          <Button type="submit" className="w-full">
-            Sign In
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
 
-        <div className="text-center text-sm text-slate-500">
-          <p>Demo: Use username "user" or "mechanic"</p>
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={onRegisterClick}
+            className="text-sm text-slate-500 hover:text-slate-700 flex items-center justify-center gap-1"
+          >
+            Don't have an account? Register
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </div>
