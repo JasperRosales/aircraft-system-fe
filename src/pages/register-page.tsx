@@ -48,73 +48,90 @@ export default function RegisterPage({ onRegister, onLoginClick }: RegisterPageP
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-2xl">
-        <div className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-            <Plane className="w-8 h-8 text-slate-700" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-x-hidden">
+      <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-gray-400 blur-3xl animate-[float_8s_ease-in-out_infinite]" />
+      <div className="absolute top-1/3 -right-32 h-72 w-72 rounded-full bg-gray-400 blur-3xl animate-[float_10s_ease-in-out_infinite]" />
+      <div className="absolute bottom-10 left-1/3 h-56 w-56 rounded-full bg-gray-400 blur-2xl animate-[float_12s_ease-in-out_infinite]" />
+
+      <div className="relative w-90 max-w-md space-y-6 rounded-xl bg-white p-8 shadow-2xl md:w-100">
+        <div className="space-y-2 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border bg-gray-500 shadow-2xl">
+            <Plane className="h-8 w-8 text-white text-shadow-2xs" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Create Account</h1>
-          <p className="text-slate-500">Register for the Aircraft System</p>
+          <h1 className="text-2xl font-bold text-gray-500 text-shadow-2xs">
+            Create Account
+          </h1>
+          <p className="-mt-2.5 text-slate-500 text-shadow-2xs">
+            Register for the Aircraft System
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium text-slate-700">
-              Name
+            <label
+              htmlFor="name"
+              className="text-sm font-medium text-gray-500 text-shadow-2xs"
+            >
+              Username
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <User className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your name"
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                placeholder="Enter your username"
+                className="w-full rounded-lg border py-2 pr-4 pl-10 text-gray-500 shadow-2xl shadow-gray-700/40"
                 disabled={loading}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium text-slate-700">
+            <label
+              htmlFor="password"
+              className="text-sm font-medium text-gray-500 text-shadow-2xs"
+            >
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a password"
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                className="w-full rounded-lg border py-2 pr-4 pl-10 text-gray-500 shadow-2xl shadow-gray-700/40"
                 disabled={loading}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">
+            <label
+              htmlFor="confirmPassword"
+              className="text-sm font-medium text-gray-500 text-shadow-2xs"
+            >
               Confirm Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your password"
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                className="w-full rounded-lg border py-2 pr-4 pl-10 shadow-2xl text-gray-500 shadow-gray-700/40"
                 disabled={loading}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-medium text-gray-500 text-shadow-2xs">
               Account Type
             </label>
             <div className="flex gap-4">
@@ -125,21 +142,22 @@ export default function RegisterPage({ onRegister, onLoginClick }: RegisterPageP
                   value="user"
                   checked={role === "user"}
                   onChange={() => setRole("user")}
-                  className="w-4 h-4 text-slate-600"
+                  className="w-4 h-4 text-gray-500"
                   disabled={loading}
                 />
-                <span className="text-sm text-slate-700">User</span>
+                <span className="text-sm text-gray-500 text-shadow-2xs">User</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
                   name="role"
                   value="mechanic"
+                  checked={role === "mechanic"}
                   onChange={() => setRole("mechanic")}
-                  className="w-4 h-4 text-slate-600"
+                  className="w-4 h-4 text-gray-500"
                   disabled={loading}
                 />
-                <span className="text-sm text-slate-700">Mechanic</span>
+                <span className="text-sm text-gray-500 text-shadow-2xs">Mechanic</span>
               </label>
             </div>
           </div>
@@ -148,7 +166,11 @@ export default function RegisterPage({ onRegister, onLoginClick }: RegisterPageP
             <p className="text-sm text-red-500">{error}</p>
           )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full rounded-lg border border-gray-400 bg-gray-500 py-2 font-semibold text-white shadow-lg shadow-gray-700/40 hover:bg-gray-700/90 transition-all "
+            disabled={loading}
+          >
             {loading ? "Creating account..." : "Create Account"}
           </Button>
         </form>
@@ -157,10 +179,10 @@ export default function RegisterPage({ onRegister, onLoginClick }: RegisterPageP
           <button
             type="button"
             onClick={onLoginClick}
-            className="text-sm text-slate-500 hover:text-slate-700 flex items-center justify-center gap-1"
+            className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:underline focus:outline-none"
           >
-            <ArrowLeft className="w-4 h-4" />
             Already have an account? Sign in
+            <ArrowLeft className="h-4 w-4" />
           </button>
         </div>
       </div>
