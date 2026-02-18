@@ -1,22 +1,31 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-    TrendingUp,
-    Bell,
-} from "lucide-react";
+import { Bell } from "lucide-react";
 import { planeService, type Plane as PlaneType } from "@/service/plane.service";
 import { partService, type PlanePart } from "@/service/part.service";
 import Header from "@/components/mvpblocks/header-2";
 import { NotificationModal } from "@/components/fragments/NotificationModal";
+import { EditPlaneModal } from "@/components/fragments/EditPlaneModal";
+import { ConfirmDeleteModal } from "@/components/fragments/ConfirmDeleteModal";
+import { PartsModal } from "@/components/fragments/PartsModal";
+import { MaintenanceActivity } from "@/components/fragments/MaintenanceActivity";
 
 export default function MechanicPage({ onLogout }: { onLogout: () => void }) {
-    const [maintenanceAlerts, setMaintenanceAlerts] = useState<PlanePart[]>([]);
     const [loading, setLoading] = useState(true);
     const [showNotificationModal, setShowNotificationModal] = useState(false);
     const [planes, setPlanes] = useState<PlaneType[]>([]);
     const [selectedPlaneId, setSelectedPlaneId] = useState<number | null>(null);
     const [filteredParts, setFilteredParts] = useState<PlanePart[]>([]);
     const [warningParts, setWarningParts] = useState<PlanePart[]>([]);
+    
+    const [currentPlaneIndex, setCurrentPlaneIndex] = useState(0);
+    const [currentPlaneParts, setCurrentPlaneParts] = useState<PlanePart[]>([]);
+    const [currentPlaneLoading, setCurrentPlaneLoading] = useState(false);
+    
+    const [showEditPlaneModal, setShowEditPlaneModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showPartsModal, setShowPartsModal] = useState(false);
+    const [editingPlane, setEditingPlane] = useState<PlaneType | null>(null);
 
     useEffect(() => {
         loadData();
@@ -27,8 +36,72 @@ export default function MechanicPage({ onLogout }: { onLogout: () => void }) {
         try {
             const planesData = await planeService.getAllPlanes();
             setPlanes(planesData);
+            // Load parts for the first plane if available
+            if (planesData.length > 0) {
+                loadPartsByPlaneId(planesData[0].id);
+            }
         } catch (error) {
             console.error("Failed to load planes:", error);
+        }
+    };
+
+    const loadPartsByPlaneId = async (planeId: number) => {
+        try {
+            setCurrentPlaneLoading(true);
+            const parts = await partService.getPartsByPlane(planeId);
+            setCurrentPlaneParts(parts);
+        } catch (error) {
+            console.error("Failed to load plane parts:", error);
+            setCurrentPlaneParts([]);
+        } finally {
+            setCurrentPlaneLoading(false);
+        }
+    };
+
+    const handleNavigateLeft = () => {
+        if (planes.length === 0) return;
+        const newIndex = currentPlaneIndex > 0 ? currentPlaneIndex - 1 : planes.length - 1;
+        setCurrentPlaneIndex(newIndex);
+        loadPartsByPlaneId(planes[newIndex].id);
+    };
+
+    const handleNavigateRight = () => {
+        if (planes.length === 0) return;
+        const newIndex = currentPlaneIndex < planes.length - 1 ? currentPlaneIndex + 1 : 0;
+        setCurrentPlaneIndex(newIndex);
+        loadPartsByPlaneId(planes[newIndex].id);
+    };
+
+    const handleEditPlane = (plane: PlaneType) => {
+        setEditingPlane(plane);
+        setShowEditPlaneModal(true);
+    };
+
+    const handleUpdatePlane = async (planeId: number, data: { tail_number: string; model: string }) => {
+        await planeService.updatePlane(planeId, data);
+        await loadPlanes();
+        setShowEditPlaneModal(false);
+        setEditingPlane(null);
+    };
+
+    const handleDeletePlane = async () => {
+        if (!editingPlane) return;
+        try {
+            await planeService.deletePlane(editingPlane.id);
+            await loadPlanes();
+            setShowDeleteModal(false);
+            setEditingPlane(null);
+            if (currentPlaneIndex >= planes.length) {
+                setCurrentPlaneIndex(Math.max(0, planes.length - 1));
+            }
+        } catch (error) {
+            console.error("Failed to delete plane:", error);
+        }
+    };
+
+    const handleViewParts = () => {
+        if (planes.length > 0) {
+            setShowPartsModal(true);
         }
     };
 
@@ -37,7 +110,6 @@ export default function MechanicPage({ onLogout }: { onLogout: () => void }) {
             setLoading(true);
             const allParts = await partService.getAllParts();
             const warning = await partService.getWarningParts(50);
-            setMaintenanceAlerts(allParts);
             setFilteredParts(allParts);
             setWarningParts(warning);
         } catch (error) {
@@ -231,27 +303,20 @@ export default function MechanicPage({ onLogout }: { onLogout: () => void }) {
                     </div>
                 </div>
 
-                <div className="rounded-xl border bg-white p-6 shadow-sm">
-                    <div className="mb-6 flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-slate-600" />
-                        <h2 className="text-lg font-semibold text-slate-900">
-                            Maintenance Activity
-                        </h2>
-                    </div>
-                    <div className="flex h-48 items-center justify-center text-slate-500">
-                        <p>Historical maintenance data will appear here</p>
-                    </div>
-                    <div className="mt-4 flex items-center justify-center gap-6">
-                        <div className="flex items-center gap-2">
-                            <div className="h-3 w-3 rounded bg-blue-500"></div>
-                            <span className="text-sm text-slate-600">Repairs</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="h-3 w-3 rounded bg-slate-400"></div>
-                            <span className="text-sm text-slate-600">Inspections</span>
-                        </div>
-                    </div>
-                </div>
+                <MaintenanceActivity
+                    planes={planes}
+                    currentPlaneIndex={currentPlaneIndex}
+                    currentPlaneParts={currentPlaneParts}
+                    loading={currentPlaneLoading}
+                    onNavigateLeft={handleNavigateLeft}
+                    onNavigateRight={handleNavigateRight}
+                    onEdit={handleEditPlane}
+                    onDelete={(plane) => {
+                        setEditingPlane(plane);
+                        setShowDeleteModal(true);
+                    }}
+                    onViewParts={handleViewParts}
+                />
             </div>
         );
     };
@@ -288,6 +353,37 @@ export default function MechanicPage({ onLogout }: { onLogout: () => void }) {
                 isOpen={showNotificationModal}
                 onClose={() => setShowNotificationModal(false)}
                 parts={warningParts}
+            />
+            
+            <EditPlaneModal
+                isOpen={showEditPlaneModal}
+                plane={editingPlane}
+                onClose={() => {
+                    setShowEditPlaneModal(false);
+                    setEditingPlane(null);
+                }}
+                onSubmit={handleUpdatePlane}
+            />
+            
+            <ConfirmDeleteModal
+                isOpen={showDeleteModal}
+                title="Delete Plane"
+                message={`Are you sure you want to delete ${editingPlane?.model} (${editingPlane?.tail_number})? This action cannot be undone and all associated parts will also be deleted.`}
+                confirmText="Delete"
+                onConfirm={handleDeletePlane}
+                onClose={() => {
+                    setShowDeleteModal(false);
+                    setEditingPlane(null);
+                }}
+            />
+            
+            <PartsModal
+                isOpen={showPartsModal}
+                plane={planes[currentPlaneIndex] || null}
+                parts={currentPlaneParts}
+                loading={currentPlaneLoading}
+                onClose={() => setShowPartsModal(false)}
+                onAddPart={() => loadPartsByPlaneId(planes[currentPlaneIndex]?.id)}
             />
         </div>
     );
