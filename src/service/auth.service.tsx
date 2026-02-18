@@ -96,15 +96,14 @@ class AuthService {
     return data.user;
   }
 
-  async register(name: string, password: string, _role: string): Promise<User> {
+  async register(name: string, password: string, role: string): Promise<User> {
     const response = await fetch(`${API_BASE}/users/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      // Backend expects: { name, password } - role is ignored (always set to "user")
-      body: JSON.stringify({ name, password }),
+      body: JSON.stringify({ name, password, role }),
     });
 
     if (!response.ok) {

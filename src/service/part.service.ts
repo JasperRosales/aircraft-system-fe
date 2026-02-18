@@ -1,3 +1,4 @@
+
 const getApiBase = (): string => {
   const envUrl = import.meta.env.VITE_SERVER_API;
   
@@ -189,6 +190,20 @@ class PartService {
 
     if (!response.ok) {
       throw new Error("Failed to get maintenance alerts");
+    }
+
+    return response.json();
+  }
+
+  async getWarningParts(threshold: number = 50): Promise<PlanePart[]> {
+    const response = await fetch(`${API_BASE}/planes/maintenance/alerts?threshold=${threshold}`, {
+      method: "GET",
+      headers: this.getHeaders(),
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to get warning parts");
     }
 
     return response.json();

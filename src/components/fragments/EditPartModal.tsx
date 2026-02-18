@@ -8,10 +8,23 @@ interface EditPartModalProps {
   part: PlanePart | null;
   onClose: () => void;
   onSubmit: (partId: number, data: UpdatePlanePartRequest) => Promise<void>;
+  onUpdated?: (part: PlanePart) => void;
 }
 
-export function EditPartModal({ isOpen, part, onClose, onSubmit }: EditPartModalProps) {
-  const [formData, setFormData] = useState<UpdatePlanePartRequest>({});
+export function EditPartModal({ isOpen, part, onClose, onSubmit, onUpdated }: EditPartModalProps) {
+  const [formData, setFormData] = useState<{
+    part_name: string;
+    serial_number: string;
+    category: string;
+    usage_limit_hours: number;
+    usage_hours: number;
+  }>({
+    part_name: "",
+    serial_number: "",
+    category: "",
+    usage_limit_hours: 1000,
+    usage_hours: 0,
+  });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -32,16 +45,35 @@ export function EditPartModal({ isOpen, part, onClose, onSubmit }: EditPartModal
 
     try {
       setLoading(true);
-      const usageHoursChanged = formData.usage_hours !== undefined && formData.usage_hours !== part.usage_hours;
-      const { usage_hours, ...updateData } = formData;
+      const usageHoursValue = formData.usage_hours;
       
-      if (Object.keys(updateData).length > 0) {
-        await onSubmit(part.id, updateData);
+      const updateData: UpdatePlanePartRequest = {
+        part_name: formData.part_name,
+        serial_number: formData.serial_number,
+        category: formData.category,
+        usage_limit_hours: formData.usage_limit_hours,
+        usage_hours: usageHoursValue,
+      };
+      
+      await onSubmit(part.id, updateData);
+      
+      // If onUpdated callback is provided, construct the updated part and pass it
+      if (onUpdated) {
+        const updatedPart: PlanePart = {
+          ...part,
+          part_name: formData.part_name,
+          serial_number: formData.serial_number,
+          category: formData.category,
+          usage_limit_hours: formData.usage_limit_hours,
+          usage_hours: usageHoursValue,
+          usage_percent: (usageHoursValue / formData.usage_limit_hours) * 100,
+        };
+        onUpdated(updatedPart);
       }
       
-      if (usageHoursChanged && formData.usage_hours !== undefined) {
-        await onSubmit(part.id, { usage_hours: formData.usage_hours });
-      }
+      onClose();
+    } catch (error) {
+      console.error("Failed to update part:", error);
     } finally {
       setLoading(false);
     }
@@ -51,9 +83,9 @@ export function EditPartModal({ isOpen, part, onClose, onSubmit }: EditPartModal
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full border">
         <div className="p-6 border-b flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-900">Edit Part</h2>
+          <h2 className="text-xl font-bold text-gray-500">Edit Part</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
           </Button>
@@ -61,7 +93,7 @@ export function EditPartModal({ isOpen, part, onClose, onSubmit }: EditPartModal
         <form onSubmit={handleSubmit} className="p-6">
           <div className="space-y-4">
             <div>
-              <label htmlFor="edit_part_name" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="edit_part_name" className="block text-sm font-medium text-gray-500 mb-1">
                 Part Name
               </label>
               <input
@@ -70,12 +102,12 @@ export function EditPartModal({ isOpen, part, onClose, onSubmit }: EditPartModal
                 value={formData.part_name || ""}
                 onChange={(e) => setFormData({ ...formData, part_name: e.target.value })}
                 placeholder="e.g., Engine"
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                className="w-full px-3 py-2 border rounded-l text-gray-500 focus:outline-none "
                 required
               />
             </div>
             <div>
-              <label htmlFor="edit_serial_number" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="edit_serial_number" className="block text-sm font-medium text-gray-500 mb-1">
                 Serial Number
               </label>
               <input
@@ -84,12 +116,12 @@ export function EditPartModal({ isOpen, part, onClose, onSubmit }: EditPartModal
                 value={formData.serial_number || ""}
                 onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
                 placeholder="e.g., SN12345"
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                className="w-full px-3 py-2 border text-gray-500 rounded-lg focus:outline-none "
                 required
               />
             </div>
             <div>
-              <label htmlFor="edit_category" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="edit_category" className="block text-sm font-medium text-gray-500 mb-1">
                 Category
               </label>
               <input
@@ -98,12 +130,12 @@ export function EditPartModal({ isOpen, part, onClose, onSubmit }: EditPartModal
                 value={formData.category || ""}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 placeholder="e.g., Engine, Avionics, Structural"
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                className="w-full px-3 py-2 border text-gray-500 rounded-lg focus:outline-none "
                 required
               />
             </div>
             <div>
-              <label htmlFor="edit_usage_limit_hours" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="edit_usage_limit_hours" className="block text-sm font-medium text-gray-500 mb-1">
                 Usage Limit (Hours)
               </label>
               <input
@@ -112,25 +144,24 @@ export function EditPartModal({ isOpen, part, onClose, onSubmit }: EditPartModal
                 min="1"
                 value={formData.usage_limit_hours || ""}
                 onChange={(e) => setFormData({ ...formData, usage_limit_hours: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                className="w-full px-3 py-2 border text-gray-500 rounded-lg focus:outline-none "
                 required
               />
             </div>
             <div>
-              <label htmlFor="edit_usage_hours" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="edit_usage_hours" className="block text-sm font-medium text-gray-500 mb-1">
                 Current Usage (Hours)
               </label>
               <input
                 id="edit_usage_hours"
                 type="number"
                 min="0"
-                value={formData.usage_hours === undefined ? "" : formData.usage_hours}
+                value={formData.usage_hours}
                 onChange={(e) => {
-                  const val = e.target.value;
-                  setFormData({ ...formData, usage_hours: val === "" ? undefined : parseInt(val) || 0 });
+                  setFormData({ ...formData, usage_hours: parseInt(e.target.value) || 0 });
                 }}
                 placeholder="Enter hours"
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                className="w-full px-3 py-2 border text-gray-500 rounded-lg focus:outline-none "
               />
             </div>
           </div>
@@ -138,7 +169,7 @@ export function EditPartModal({ isOpen, part, onClose, onSubmit }: EditPartModal
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="bg-gray-500 hover:bg-gray-600">
               {loading ? "Updating..." : "Save Changes"}
             </Button>
           </div>

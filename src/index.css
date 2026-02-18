@@ -126,6 +126,12 @@
   }
 }
 
+/* For web color override for input */
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  -webkit-text-fill-color: #6b7280 !important; /* text-gray-500 */
+  -webkit-background-color: transparent !important;
+}
 
 @keyframes float {
   0%   { transform: translate(0px, 0px); }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BrowserRouter } from "react-router-dom";
 import LoginPage from "./pages/login-page";
 import RegisterPage from "./pages/register-page";
 import UserPage from "./pages/user-page";
@@ -61,29 +62,37 @@ function App() {
     );
   }
 
-  // Show dashboard if logged in
-  if (currentRole !== null) {
-    if (currentRole === "user") {
-      return <UserPage onLogout={handleLogout} />;
+  const renderContent = () => {
+    // Show dashboard if logged in
+    if (currentRole !== null) {
+      if (currentRole === "user") {
+        return <UserPage onLogout={handleLogout} />;
+      }
+      return <MechanicPage onLogout={handleLogout} />;
     }
-    return <MechanicPage onLogout={handleLogout} />;
-  }
 
-  // Show auth pages
-  if (currentView === "register") {
+    // Show auth pages
+    if (currentView === "register") {
+      return (
+        <RegisterPage
+          onRegister={handleRegister}
+          onLoginClick={() => setCurrentView("login")}
+        />
+      );
+    }
+
     return (
-      <RegisterPage
-        onRegister={handleRegister}
-        onLoginClick={() => setCurrentView("login")}
+      <LoginPage
+        onLogin={handleLogin}
+        onRegisterClick={() => setCurrentView("register")}
       />
     );
-  }
+  };
 
   return (
-    <LoginPage
-      onLogin={handleLogin}
-      onRegisterClick={() => setCurrentView("register")}
-    />
+    <BrowserRouter>
+      {renderContent()}
+    </BrowserRouter>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Plane, Lock, User, ArrowRight } from "lucide-react";
 import { authService } from "@/service/auth.service";
@@ -32,11 +33,11 @@ export default function LoginPage({
             const user = await authService.login(name, password);
 
             // Map backend role to frontend role
-            if (user.role === "mechanic" || name.toLowerCase() === "mechanic") {
-                onLogin("mechanic");
-            } else {
-                onLogin("user");
-            }
+            // Check if user.role is "mechanic" (case insensitive) or username starts with "mechanic"
+            const isMechanic = user.role?.toLowerCase() === "mechanic" || name.toLowerCase().startsWith("mechanic");
+            const userRole = isMechanic ? "mechanic" : "user";
+            console.log("Login successful, user role:", user.role, "mapped to:", userRole);
+            onLogin(userRole);
         } catch (err) {
             setError(
                 err instanceof Error
@@ -54,7 +55,12 @@ export default function LoginPage({
             <div className="absolute top-1/3 -right-32 h-72 w-72 rounded-full bg-gray-400 blur-3xl animate-[float_10s_ease-in-out_infinite]" />
             <div className="absolute bottom-10 left-1/3 h-56 w-56 rounded-full bg-gray-400 blur-2xl animate-[float_12s_ease-in-out_infinite]" />
 
-            <div className="relative w-90 max-w-md space-y-6 rounded-xl bg-white p-8 shadow-2xl md:w-100">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="relative w-90 max-w-md space-y-6 rounded-xl bg-white p-8 shadow-2xl md:w-100"
+            >
                 <div className="space-y-2 text-center">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border bg-gray-500 shadow-2xl">
                         <Plane className="h-8 w-8 text-white text-shadow-2xs" />
@@ -131,7 +137,8 @@ export default function LoginPage({
                         <ArrowRight className="h-4 w-4" />
                     </button>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 }
+
