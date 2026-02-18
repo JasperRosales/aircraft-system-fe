@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { authService } from "./service/auth.service";
+import { Loader2 } from "lucide-react";
 
 // Lazy load all pages for better performance
 const LoginPage = lazy(() => import("./pages/login-page"));
@@ -15,7 +16,7 @@ type UserRole = "user" | "mechanic" | null;
 function LoadingFallback() {
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="text-lg">Loading...</div>
+      <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
     </div>
   );
 }
@@ -68,7 +69,7 @@ function App() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading...</div>
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
       </div>
     );
   }
