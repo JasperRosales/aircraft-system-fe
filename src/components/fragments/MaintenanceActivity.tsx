@@ -33,7 +33,7 @@ export function MaintenanceActivity({
         <div className="rounded-xl border bg-white p-6 shadow-sm">
             <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold text-slate-900">
+                    <h2 className="text-lg font-semibold text-gray-500 text-shadow-2xs">
                         Maintenance Activity
                     </h2>
                 </div>

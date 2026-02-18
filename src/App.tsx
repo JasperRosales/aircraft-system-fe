@@ -1,13 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter } from "react-router-dom";
-import LoginPage from "./pages/login-page";
-import RegisterPage from "./pages/register-page";
-import UserPage from "./pages/user-page";
-import MechanicPage from "./pages/mechanic-page";
 import { authService } from "./service/auth.service";
+
+// Lazy load all pages for better performance
+const LoginPage = lazy(() => import("./pages/login-page"));
+const RegisterPage = lazy(() => import("./pages/register-page"));
+const UserPage = lazy(() => import("./pages/user-page"));
+const MechanicPage = lazy(() => import("./pages/mechanic-page"));
 
 type AuthView = "login" | "register";
 type UserRole = "user" | "mechanic" | null;
+
+// Loading fallback component
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-lg">Loading...</div>
+    </div>
+  );
+}
 
 function App() {
   const [currentView, setCurrentView] = useState<AuthView>("login");
@@ -91,7 +102,9 @@ function App() {
 
   return (
     <BrowserRouter>
-      {renderContent()}
+      <Suspense fallback={<LoadingFallback />}>
+        {renderContent()}
+      </Suspense>
     </BrowserRouter>
   );
 }

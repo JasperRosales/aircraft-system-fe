@@ -1,13 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Plane, Wrench, ChevronRight, Plus, Pencil, Trash } from "lucide-react";
 import { planeService, type Plane as PlaneType } from "@/service/plane.service";
 import { partService, type PlanePart } from "@/service/part.service";
-import { AddPlaneModal } from "@/components/fragments/AddPlaneModal";
-import { EditPlaneModal } from "@/components/fragments/EditPlaneModal";
-import { ConfirmDeleteModal } from "@/components/fragments/ConfirmDeleteModal";
-import { PartsModal } from "@/components/fragments/PartsModal";
 import Header from "@/components/mvpblocks/header-2";
+import { motion } from "framer-motion";
+
+const AddPlaneModal = lazy(() => import("@/components/fragments/AddPlaneModal").then(module => ({ default: module.AddPlaneModal })));
+const EditPlaneModal = lazy(() => import("@/components/fragments/EditPlaneModal").then(module => ({ default: module.EditPlaneModal })));
+const ConfirmDeleteModal = lazy(() => import("@/components/fragments/ConfirmDeleteModal").then(module => ({ default: module.ConfirmDeleteModal })));
+const PartsModal = lazy(() => import("@/components/fragments/PartsModal").then(module => ({ default: module.PartsModal })));
+
+const ModalFallback = () => (
+    <div className="fixed inset-0 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-500"></div>
+    </div>
+);
 
 export default function UserPage({ onLogout }: { onLogout: () => void }) {
   const [planes, setPlanes] = useState<PlaneType[]>([]);
@@ -88,7 +96,12 @@ const handleDeletePlane = async (planeId: number) => {
       <Header onLogout={onLogout}/>
 
       <main className="max-w-7xl mx-auto px-4 pt-16 py-8 relative">
-        <div className="mb-6 mt-4 flex items-center justify-between">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-6 mt-4 flex items-center justify-between"
+        >
           <div>
             <h2 className="text-sm md:text-lg font-semibold text-gray-500">Available Planes</h2>
             <p className="text-xs text-slate-500">Browse and view aircraft details</p>
@@ -100,7 +113,7 @@ const handleDeletePlane = async (planeId: number) => {
             <Plus className="w-4 h-4" />
             Add Plane
           </Button>
-        </div>
+        </motion.div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -113,9 +126,12 @@ const handleDeletePlane = async (planeId: number) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {planes.map((plane) => (
-              <div
+            {planes.map((plane, index) => (
+              <motion.div
                 key={plane.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
                 className="bg-white rounded-xl shadow-2xl border p-6 hover:shadow-lg transition-shadow"
               >
 <div className="flex items-start justify-between mb-4">
@@ -158,42 +174,50 @@ const handleDeletePlane = async (planeId: number) => {
                   View Parts
                   <ChevronRight className="w-4 h-4" />
                 </Button>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
       </main>
 
-      <AddPlaneModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSubmit={handleAddPlane}
-      />
+      <Suspense fallback={<ModalFallback />}>
+        <AddPlaneModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleAddPlane}
+        />
+      </Suspense>
 
-<PartsModal
-        isOpen={!!selectedPlane}
-        plane={selectedPlane}
-        parts={parts}
-        loading={partsLoading}
-        onClose={() => setSelectedPlane(null)}
-        onAddPart={handlePartsUpdated}
-      />
+      <Suspense fallback={<ModalFallback />}>
+        <PartsModal
+          isOpen={!!selectedPlane}
+          plane={selectedPlane}
+          parts={parts}
+          loading={partsLoading}
+          onClose={() => setSelectedPlane(null)}
+          onAddPart={handlePartsUpdated}
+        />
+      </Suspense>
 
-<EditPlaneModal
-        isOpen={!!editingPlane}
-        plane={editingPlane}
-        onClose={() => setEditingPlane(null)}
-        onSubmit={handleEditPlane}
-      />
+      <Suspense fallback={<ModalFallback />}>
+        <EditPlaneModal
+          isOpen={!!editingPlane}
+          plane={editingPlane}
+          onClose={() => setEditingPlane(null)}
+          onSubmit={handleEditPlane}
+        />
+      </Suspense>
 
-      <ConfirmDeleteModal
-        isOpen={!!deletingPlane}
-        title="Delete Plane"
-        message={`Are you sure you want to delete ${deletingPlane?.model} (${deletingPlane?.tail_number})? This action cannot be undone.`}
-        confirmText="Delete"
-        onConfirm={() => deletingPlane && handleDeletePlane(deletingPlane.id)}
-        onClose={() => setDeletingPlane(null)}
-      />
+      <Suspense fallback={<ModalFallback />}>
+        <ConfirmDeleteModal
+          isOpen={!!deletingPlane}
+          title="Delete Plane"
+          message={`Are you sure you want to delete ${deletingPlane?.model} (${deletingPlane?.tail_number})? This action cannot be undone.`}
+          confirmText="Delete"
+          onConfirm={() => deletingPlane && handleDeletePlane(deletingPlane.id)}
+          onClose={() => setDeletingPlane(null)}
+        />
+      </Suspense>
     </div>
   );
 }

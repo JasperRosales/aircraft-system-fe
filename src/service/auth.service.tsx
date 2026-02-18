@@ -131,7 +131,7 @@ class AuthService {
   }
 
   async getCurrentUser(): Promise<User | null> {
-    const response = await fetch(`${API_BASE}/users`, {
+    const response = await fetch(`${API_BASE}/users/me`, {
       method: "GET",
       headers: this.getHeaders(),
       credentials: "include",
@@ -141,8 +141,8 @@ class AuthService {
       return null;
     }
 
-    const users: User[] = await response.json();
-    return users[0] || null;
+    const user: User = await response.json();
+    return user || null;
   }
 
   async getUserById(id: number): Promise<User> {

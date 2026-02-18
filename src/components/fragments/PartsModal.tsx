@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Plus, Pencil, Trash, Clock, Check } from "lucide-react";
 import { LinearProgress } from "./LinearProgress";
-import { AddPartModal } from "./AddPartModal";
-import { EditPartModal } from "./EditPartModal";
-import { UpdateAllUsageModal } from "./UpdateAllUsageModal";
 import { partService, type PlanePart, type UpdatePlanePartRequest } from "@/service/part.service";
 import type { Plane } from "@/service/plane.service";
+
+const AddPartModal = lazy(() => import("./AddPartModal").then(module => ({ default: module.AddPartModal })));
+const EditPartModal = lazy(() => import("./EditPartModal").then(module => ({ default: module.EditPartModal })));
+const UpdateAllUsageModal = lazy(() => import("./UpdateAllUsageModal").then(module => ({ default: module.UpdateAllUsageModal })));
+
+const ModalFallback = () => (
+    <div className="fixed inset-0 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-500"></div>
+    </div>
+);
 
 interface PartsModalProps {
   isOpen: boolean;
@@ -220,32 +227,38 @@ export function PartsModal({ isOpen, plane, parts, loading, onClose, onAddPart }
         </div>
       </div>
 
-      <AddPartModal
-        isOpen={showAddPartModal}
-        onClose={() => setShowAddPartModal(false)}
-        onSubmit={async (data) => {
-          await partService.addPart(plane.id, data);
-          await handleAddPartSubmit();
-        }}
-      />
+      <Suspense fallback={<ModalFallback />}>
+        <AddPartModal
+          isOpen={showAddPartModal}
+          onClose={() => setShowAddPartModal(false)}
+          onSubmit={async (data) => {
+            await partService.addPart(plane.id, data);
+            await handleAddPartSubmit();
+          }}
+        />
+      </Suspense>
 
-      <EditPartModal
-        isOpen={showEditPartModal}
-        part={editingPart}
-        onClose={() => {
-          setShowEditPartModal(false);
-          setEditingPart(null);
-        }}
-        onSubmit={handleUpdatePart}
-        onUpdated={handlePartUpdated}
-      />
+      <Suspense fallback={<ModalFallback />}>
+        <EditPartModal
+          isOpen={showEditPartModal}
+          part={editingPart}
+          onClose={() => {
+            setShowEditPartModal(false);
+            setEditingPart(null);
+          }}
+          onSubmit={handleUpdatePart}
+          onUpdated={handlePartUpdated}
+        />
+      </Suspense>
 
-      <UpdateAllUsageModal
-        isOpen={showUpdateAllUsageModal}
-        onClose={() => setShowUpdateAllUsageModal(false)}
-        partCount={parts.length}
-        onSubmit={handleUpdateAllUsage}
-      />
+      <Suspense fallback={<ModalFallback />}>
+        <UpdateAllUsageModal
+          isOpen={showUpdateAllUsageModal}
+          onClose={() => setShowUpdateAllUsageModal(false)}
+          partCount={parts.length}
+          onSubmit={handleUpdateAllUsage}
+        />
+      </Suspense>
     </>
   );
 }
